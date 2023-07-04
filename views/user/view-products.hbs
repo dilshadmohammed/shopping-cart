@@ -1,16 +1,19 @@
-    <section>
-        <div class="container mt-5">
-            <div class="row">
-                {{#each products}}
-                <div class="card p-3" style="width: 15rem; height:30rem;">
-                    <img style="max-width: 13rem; max-height:13rem" src="/product-images/{{this._id}}.{{this.fileExtension}}" class="card-img-top" alt="...">
-                    <div class="card-body">
-                        <h5 class="card-title">{{this.Name}}</h5>
-                        <p class="card-text">{{this.Description}}</p>
-                        <a href="#" class="btn btn-primary">Add to Cart</a>
-                    </div>
+<section>
+    <div class="container mt-5">
+        <div class="row">
+            {{#each products}}
+            <div class="col-md-3">
+            <div class="card m-3" style="width: 16rem; height: 27rem;">
+                <img class="card-img-top mx-auto d-block" style="width: 13rem; height: 12rem;" src="/product-images/{{this._id}}.{{this.fileExtension}}"
+                    alt="Card image cap">
+                <div class="card-body">
+                    <h5 class="card-title">{{this.Name}}</h5>
+                    <p class="card-text">{{this.Description}}</p>
+                    <a href="#" class="btn btn-primary fix-bottom">Add to Cart</a>
                 </div>
-                {{/each}}
             </div>
+            </div>
+            {{/each}}
         </div>
-    </section>
+    </div>
+</section>

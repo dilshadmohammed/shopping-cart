@@ -1,6 +1,6 @@
 <section>
     <div class="container">
-        <div class="row mt-4">
+        <div class="row mt-3">
             <a href="/admin/add-product" class="btn btn-success ml-auto" style="max-width: 150px;">Add Product</a>
         </div>
         <table class="table mt-4">
@@ -21,6 +21,10 @@
       <td>{{this.Category}}</td>
       <td>{{this.Description}}</td>
       <td><img style="width: 50px; height:50px" src="/product-images/{{this._id}}.{{this.fileExtension}}" alt=""></td>
+      <td class="px-2">
+        <a  href="/admin/edit-product?id={{this._id}}" class="btn btn-primary d-flex align-items-center float-left mr-3" >Edit</a>
+        <a  href="/admin/delete-product?id={{this._id}}" class="btn btn-danger d-flex align-items-center ml-5 " onclick="return confirm('Are you sure to delete {{this.Name}}?')" >Delete</a>
+      </td>
     </tr>
     {{/each}}
   </tbody>

@@ -1,11 +1,11 @@
 var express = require('express');
 var router = express.Router();
-const productHelper = require('../helpers/product-helpers');
+const productHelpers = require('../helpers/product-helpers');
 
 
 /* GET users listing. */
 router.get('/', function (req, res, next) {
-  productHelper.getAllProducts().then((products)=>{
+  productHelpers.getAllProducts().then((products)=>{
     res.render('admin/view-products', { admin: true, products });
   })
   
@@ -21,7 +21,7 @@ router.post('/add-product', (req, res) => {
   const fileExtension = parts[1];
 
 
-  productHelper.addProduct(req.body, fileExtension, (imageName) => {
+  productHelpers.addProduct(req.body, fileExtension, (imageName) => {
     
     image.mv('./public/product-images/' + imageName, (err) => {
       if (!err) {
@@ -34,5 +34,32 @@ router.post('/add-product', (req, res) => {
 
   });
 });
+
+router.get('/delete-product',(req,res)=>{
+  let proId=req.query.id;
+  productHelpers.deleteProduct(proId).then((response)=>{
+    res.redirect('/admin');
+  })
+});
+
+router.get('/edit-product',async(req,res)=>{
+  let product= await productHelpers.getProductDetails(req.query.id);
+  res.render('admin/edit-product',{product});
+});
+
+router.post('/edit-product',(req,res)=>{
+  productHelpers.updateProduct(req.body);
+  res.redirect('/admin');
+  if(req.files.Image){
+    let image=req.files.Image;
+    const parts=image.mimetype.split('/');
+    fileExtension=parts[1];
+    let imageName=req.body.id+"."+fileExtension;
+    image.mv('./public/product-images/' + imageName);
+    productHelpers.updateProductImgExtension(fileExtension,req.body.id);
+  }
+  
+})
+
 
 module.exports = router;
