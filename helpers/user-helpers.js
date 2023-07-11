@@ -2,8 +2,8 @@ var db = require('../config/connection');
 var collection = require('../config/collections');
 const bcrypt = require('bcrypt');
 const { ObjectId } = require('mongodb');
-const { response } = require('../app');
-const { resolve } = require('promise');
+const { response, routes } = require('../app');
+const { resolve, reject } = require('promise');
 
 module.exports = {
 
@@ -42,25 +42,28 @@ module.exports = {
              item: new ObjectId(proId),
              quantity: 1
         }
+        let isNewProduct=false;
         return new Promise(async (resolve, reject) => {
+            
             let userCart = await db.get().collection(collection.CART_COLLECTION).findOne({ user: new ObjectId(userId) });
             if (userCart) {
                 let proExist=userCart.products.findIndex(product=> product.item==proId)
-                console.log(proExist)
                 if(proExist!=-1){
-                    db.get().collection(collection.CART_COLLECTION).updateOne({'products.item': new ObjectId(proId)},
+                    db.get().collection(collection.CART_COLLECTION).updateOne({user: new ObjectId(userId),'products.item': new ObjectId(proId)},
                     {
                         $inc:{'products.$.quantity':1}
                     }
-                    )
+                    ).then(()=>{
+                        resolve({isNewProduct});
+                    })
                 }
                 else
                 {db.get().collection(collection.CART_COLLECTION).updateOne({ user: new ObjectId(userId) },
                     {
                         $push: { products: proObj}
                     }
-                ).then((response) => {
-                    resolve();
+                ).then(() => {
+                    resolve({isNewProduct:true});
                 })}
             }
             else {
@@ -68,8 +71,8 @@ module.exports = {
                     user: new ObjectId(userId),
                     products: [proObj]
                 }
-                db.get().collection(collection.CART_COLLECTION).insertOne(cartObj).then((response) => {
-                    resolve();
+                db.get().collection(collection.CART_COLLECTION).insertOne(cartObj).then(() => {
+                    resolve({isNewProduct:true});
                 })
             }
         })
@@ -113,6 +116,38 @@ module.exports = {
                 count = cart.products.length;
             }
             resolve(count)
+        })
+    },
+    changeProductQuantity: (details)=>{
+        details.quantity=parseInt(details.quantity);
+        details.count=parseInt(details.count);
+        return new Promise((resolve,reject)=>{
+            if(details.count==-1 && details.quantity==1){
+                db.get().collection(collection.CART_COLLECTION).updateOne({_id:new ObjectId(details.cart)},
+                {
+                    $pull:{products:{item:new ObjectId(details.product)}}
+                }).then(()=>{
+                    resolve({removeProduct:true})
+                })
+            }
+            else{
+                db.get().collection(collection.CART_COLLECTION).updateOne({_id: new ObjectId(details.cart),'products.item': new ObjectId(details.product)},
+                    {
+                        $inc:{'products.$.quantity':details.count}
+                    }
+                    ).then(()=>{
+                        resolve(true)
+                    })}
+        })
+    },
+    removeProduct:(details)=>{
+        return new Promise((resolve,reject)=>{
+            db.get().collection(collection.CART_COLLECTION).updateOne({_id:new ObjectId(details.cart)},
+            {
+                $pull:{products:{item:new ObjectId(details.product)}}
+            }).then(()=>{
+                resolve()
+            })
         })
     }
 

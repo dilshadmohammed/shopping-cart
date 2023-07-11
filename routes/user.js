@@ -2,7 +2,7 @@ var express = require('express');
 var router = express.Router();
 const productHelpers = require('../helpers/product-helpers');
 const userHelpers = require('../helpers/user-helpers');
-const { use } = require('../app');
+const { use, response } = require('../app');
 
 const verifyLogin = (req, res, next) => {
   if (req.session.loggedIn)
@@ -70,9 +70,20 @@ router.get('/cart',verifyLogin,async(req,res)=>{
 })
 
 router.get('/add-to-cart',(req,res)=>{
-  userHelpers.addToCart(req.query.id,req.session.user._id).then(()=>{
-    res.json({status:true})
+  userHelpers.addToCart(req.query.id,req.session.user._id).then((response)=>{
+    response.status=true;
+    res.json(response)
   })
 })
 
+router.post('/change-product-quantity',(req,res,next)=>{
+  userHelpers.changeProductQuantity(req.body).then((response)=>{
+    res.json(response);
+  })
+})
+router.post('/remove-product',(req,res)=>{
+  userHelpers.removeProduct(req.body).then((response)=>{
+    res.json({status:true})
+  })
+})
 module.exports = router;
