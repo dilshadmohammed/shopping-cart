@@ -19,6 +19,7 @@ router.post('/add-product', (req, res) => {
   let image = req.files.Image;
   const parts = image.mimetype.split('/');
   const fileExtension = parts[1];
+  req.body.Price=Number(req.body.Price)
 
 
   productHelpers.addProduct(req.body, fileExtension, (imageName) => {
@@ -48,6 +49,7 @@ router.get('/edit-product',async(req,res)=>{
 });
 
 router.post('/edit-product',(req,res)=>{
+  req.body.Price=Number(req.body.Price)
   productHelpers.updateProduct(req.body);
   res.redirect('/admin');
   if(req.files.Image){

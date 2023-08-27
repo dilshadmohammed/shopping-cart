@@ -14,6 +14,7 @@
                 </tr>
             </thead>
            {{#each products}}
+           
           
             <tbody>
 
@@ -24,9 +25,9 @@
                     <td>Rs.{{this.product.Price}}</td>
 
                     <td>
-                        <button class="btn mr-3" onclick="changeQuantity('{{this._id}}','{{this.product._id}}',-1)">-</button>
+                        <button class="btn mr-3 " onclick="changeQuantity('{{this._id}}','{{this.product._id}}','{{../user._id}}',-1)">-</button>
                         <span id="{{this.product._id}}">{{this.quantity}}</span>
-                        <button class="btn ml-3" onclick="changeQuantity('{{this._id}}','{{this.product._id}}',1)">+</button>
+                        <button class="btn ml-3" onclick="changeQuantity('{{this._id}}','{{this.product._id}}','{{../user._id}}',1)">+</button>
                     </td>
                     <td>
                         <button class="btn btn-danger" onclick="removeProduct('{{this._id}}','{{this.product._id}}')">Remove</button>
@@ -36,5 +37,11 @@
             </tbody>
             {{/each}}
         </table>
+        <hr>
+        <div class="float-right pr-5">
+            <h5 class="float-left mr-5">Total: Rs.<span id="total">{{total}}</span></h5>
+            <br>
+            <a href="/place-order" class="btn btn-warning mt-3" style="width: 100%;"><b>Place Order</b></a>
+        </div>
     </div>
 </section>
