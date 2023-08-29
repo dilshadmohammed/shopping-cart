@@ -77,7 +77,11 @@ router.get('/logout',(req,res)=>{
 router.get('/cart',verifyLogin,async(req,res)=>{
   let products =await userHelpers.getCartProducts(req.session.user._id);
   let total=await userHelpers.getTotalAmount(req.session.user._id);
-   res.render('user/cart',{products,user:req.session.user,id:req.session.user._id,total});
+  let isEmpty=1;
+  if(products.length > 0)
+    isEmpty=0;
+  console.log(isEmpty)
+   res.render('user/cart',{products,user:req.session.user,id:req.session.user._id,total,isEmpty});
 })
 
 router.get('/add-to-cart',verifyLogin,(req,res)=>{
@@ -107,13 +111,49 @@ router.get('/place-order',verifyLogin,async(req,res)=>{
 router.post('/place-order',async(req,res)=>{
   let products=await userHelpers.getCartProductList(req.body.userId)
   let totalPrice=await userHelpers.getTotalAmount(req.body.userId)
-  userHelpers.placeOrder(req.body,products,totalPrice).then((response)=>{
-    res.json({status:true})
+  if(products){
+    userHelpers.placeOrder(req.body,products,totalPrice).then((orderId)=>{
+      if(req.body['payment-method']==='COD')
+      res.json({codSuccess:true})
+      else if(req.body['payment-method']==='ONLINE'){
+        userHelpers.generateRazorpay(orderId,totalPrice).then((response)=>{
+          res.json(response);
+        })
+      }
+      else{
+        res.json({status:false})
+      }
   })
+  }
+  else{
+    res.json({status:false})
+  }
 })
 
 router.get('/order-placed',verifyLogin,async(req,res)=>{
   res.render('user/order-placed')
 })
 
+router.get('/orders',verifyLogin,async(req,res)=>{
+  let orderList=await userHelpers.getOrderList(req.session.user._id)
+  res.render('user/orders',{orderList});
+})
+
+router.get('/view-order-details/:orderId',verifyLogin,async(req,res)=>{
+  let orderDetails = await userHelpers.getOrderDetails(req.params.orderId)
+  console.log(orderDetails)
+  res.render('user/view-order',orderDetails)
+})
+
+router.post('/verify-payment',verifyLogin,(req,res)=>{
+  userHelpers.verifyPayment(req.body).then(()=>{
+    userHelpers.changePaymentStatus(req.body['order[receipt]']).then(()=>{
+      console.log('updated')
+      res.json({status:true})
+    })
+    }).catch(()=>{
+      console.log('something error')
+      res.json({status:false})
+  })
+})
 module.exports = router;

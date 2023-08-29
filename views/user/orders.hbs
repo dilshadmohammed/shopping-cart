@@ -1,0 +1,18 @@
+<section class="container mt-4">
+    <h1>Your Orders</h1>
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <ul class="list-group">
+                {{#each orderList}}
+                <li class="list-group-item">
+                    <p>Date: {{this.date}}</p>
+                    <p>Status: {{this.status}}
+                    </p>
+                    <p>Total: ${{this.totalAmount}}</p>
+                    <a href="/view-order-details/{{this._id}}" class="btn btn-primary">View Details</a>
+                </li>
+                {{/each}}
+            </ul>
+        </div>
+    </div>
+</section>

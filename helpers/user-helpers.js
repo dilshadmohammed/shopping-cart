@@ -4,6 +4,12 @@ const bcrypt = require('bcrypt');
 const { ObjectId } = require('mongodb');
 const { response, routes } = require('../app');
 const { resolve, reject } = require('promise');
+const Razorpay = require('razorpay');
+
+var instance = new Razorpay({
+  key_id: 'rzp_test_K5vq8VRFryU3Xl',
+  key_secret: 'PAMzehTnhAfnFpw94S6c9oja',
+});
 
 module.exports = {
 
@@ -209,15 +215,137 @@ module.exports = {
             }
             db.get().collection(collection.ORDER_COLLECTION).insertOne(orderObj).then((response)=>{
                 db.get().collection(collection.CART_COLLECTION).deleteOne({user: new ObjectId(order.userId)})
-                resolve()
+                resolve(response.insertedId)
             })
         })
     },
     getCartProductList:(userId)=>{
         return new Promise(async(resolve,reject)=>{
             let cart=await db.get().collection(collection.CART_COLLECTION).findOne({user:new ObjectId(userId)})
+            if(cart)
             resolve(cart.products)
+            else
+            resolve(false)
+        })
+    },
+    getOrderList:(userId)=>{
+        return new Promise(async(resolve,reject)=>{
+            let orderList= await db.get().collection(collection.ORDER_COLLECTION).aggregate([
+                {
+                    $match:{userId:new ObjectId(userId)}
+                },
+                {
+                    $project:{_id:1,totalAmount:1,date:1,status:1}
+                }
+            ]).toArray()
+            resolve(orderList)
+        })
+    },
+    getOrderDetails:(orderId)=>{
+        return new Promise(async(resolve,reject)=>{
+            let orderDetails= await db.get().collection(collection.ORDER_COLLECTION).aggregate([
+                {
+                  $match: {
+                    "_id":new ObjectId(orderId) // Replace with the desired order ID
+                  }
+                },
+                {
+                  $lookup: {
+                    from: collection.PRODUCT_COLLECTION, // Name of the "products" collection
+                    localField: "products.item",
+                    foreignField: "_id",
+                    as: "productDetails"
+                  }
+                },
+                {
+                    $addFields: {
+                      "productDetails": {
+                        $map: {
+                          input: "$productDetails",
+                          as: "prodDetail",
+                          in: {
+                            _id: "$$prodDetail._id",
+                            Name: "$$prodDetail.Name",
+                            Price: "$$prodDetail.Price",
+                            fileExtension: "$$prodDetail.fileExtension",
+                            quantity: {
+                              $let: {
+                                vars: {
+                                  matchingProduct: {
+                                    $filter: {
+                                      input: "$products",
+                                      as: "product",
+                                      cond: { $eq: ["$$product.item", "$$prodDetail._id"] }
+                                    }
+                                  }
+                                },
+                                in: { $arrayElemAt: ["$$matchingProduct.quantity", 0] }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                {
+                  $project: {
+                    _id: 1,
+                    date: 1,
+                    totalAmount: 1,
+                    paymentMethod: 1,
+                    deliveryDetails: 1,
+                    status:1,
+                    productDetails: {
+                      _id: 1,
+                      Name: 1,
+                      Price: 1,
+                      fileExtension: 1,
+                      quantity:1
+                    }
+                  }
+                }
+              ]).next()
+            resolve(orderDetails)
+        })
+    },
+    generateRazorpay:(orderId,totalAmount)=>{
+        return new Promise((resolve,reject)=>{
+            var options = {
+                amount: totalAmount*100,  // amount in the smallest currency unit
+                currency: "INR",
+                receipt: ""+orderId
+              };
+              instance.orders.create(options, function(err, order) {
+                resolve(order)
+              });
+        })
+    },
+    verifyPayment:(details)=>{
+        return new Promise((resolve, reject) => {
+            const crypto = require('crypto');
+            let hmac = crypto.createHmac('sha256', 'PAMzehTnhAfnFpw94S6c9oja');
+            hmac.update(details['payment[razorpay_order_id]'] + '|' + details['payment[razorpay_payment_id]']);
+            hmac = hmac.digest('hex');
+            if (hmac == details['payment[razorpay_signature]']) {
+                resolve();
+            } else {
+                reject();
+            }
+        });
+        
+    },
+    changePaymentStatus:(orderId)=>{
+        return new Promise((resolve,reject)=>{
+            db.get().collection(collection.ORDER_COLLECTION).updateOne({_id:new ObjectId(orderId)},
+            {
+                $set:{
+                    status:'placed'
+                }
+            }).then(()=>{
+                resolve()
+            })
         })
     }
 }
+
 

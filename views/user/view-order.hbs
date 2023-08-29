@@ -1,0 +1,35 @@
+<section class="container mt-4">
+    <h1>Order Details</h1>
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Order ID: {{_id}}</h5>
+            <p class="card-text">Date: {{date}}</p>
+            <p class="card-text">Total: ${{totalAmount}}</p>
+            <p class="card-text">Delivery Mobile: {{deliveryDetails.mobile}}</p>
+            <p class="card-text">Delivery Address: {{deliveryDetails.address}}</p>
+            <p class="card-text">Delivery Pincode: {{deliveryDetails.pincode}}</p>
+            <p class="card-text">Payment Method: {{paymentMethod}}</p>
+            <p class="card-text">Order status: {{status}}</p>
+
+        </div>
+    </div>
+    <div class="mt-4">
+        <h2>Products</h2>
+        {{#each productDetails}}
+        <div class="card mb-3">
+            <div class="row g-0">
+                <div class="col-md-4">
+                    <img src="/product-images/{{this._id}}.{{this.fileExtension}}" alt="{{item.Name}}" style="height: 10rem" class="img-fluid">
+                </div>
+                <div class="col-md-8">
+                    <div class="card-body">
+                        <h5 class="card-title">{{this.Name}}</h5>
+                        <p class="card-text">Price: ${{this.Price}}</p>
+                        <p class="card-text">Quantity: {{this.quantity}}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{/each}}
+    </div>
+</section>
